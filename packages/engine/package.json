@@ -8,7 +8,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
-    "query": "tsx src/scripts/query-release.ts"
+    "query": "tsx src/scripts/query-release.ts",
+    "ingest": "tsx src/scripts/import-folder.ts"
   },
   "dependencies": {
     "js-yaml": "^5.0.0",

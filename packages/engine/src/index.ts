@@ -1,6 +1,7 @@
 export const ENGINE_VERSION = '0.0.0'
 export * from './filesystem/local.js'
 export * from './filesystem/types.js'
+export * from './matching/index.js'
 export * from './metadata-providers/cache/index.js'
 export * from './metadata-providers/discogs/client.js'
 export * from './metadata-providers/discogs/types.js'
