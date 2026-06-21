@@ -5,12 +5,11 @@
  *   pnpm --filter @musicplayer/engine query -- "Artist" "Album Title"
  *   pnpm --filter @musicplayer/engine query -- "Jay L" "BRSTL004"
  *
- * To also query Discogs, set the DISCOGS_TOKEN environment variable:
- *   DISCOGS_TOKEN=your_token pnpm --filter @musicplayer/engine query -- "Jay L" "BRSTL004"
- *
- * Get a free Discogs token at: https://www.discogs.com/settings/developers
+ * Discogs is enabled automatically when DISCOGS_TOKEN is set in packages/engine/.env.
+ * See .env.example for the format.
  */
 
+import 'dotenv/config'
 import { MusicBrainzClient } from '../metadata-providers/musicbrainz/client.js'
 import { DiscogsClient } from '../metadata-providers/discogs/client.js'
 
