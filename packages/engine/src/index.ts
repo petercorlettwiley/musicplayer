@@ -1,3 +1,7 @@
 export const ENGINE_VERSION = '0.0.0'
+export * from './filesystem/local.js'
+export * from './filesystem/types.js'
+export * from './scanner/index.js'
+export * from './scanner/types.js'
 export * from './schema/index.js'
 export * from './yaml/index.js'
