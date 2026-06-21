@@ -7,7 +7,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsc",
+    "query": "tsx src/scripts/query-release.ts"
   },
   "dependencies": {
     "js-yaml": "^5.0.0",
@@ -17,6 +18,7 @@
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.0.0",
+    "tsx": "^4.22.4",
     "vitest": "^2.0.0"
   }
 }
