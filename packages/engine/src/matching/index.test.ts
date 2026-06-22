@@ -152,6 +152,19 @@ describe('scoreMBRelease', () => {
     expect(candidate.medium).toBe('Vinyl')
     expect(candidate.catalogNumber).toBe('BRSTL004')
   })
+
+  it('boosts score when preferred medium matches', () => {
+    const vinyl = scoreMBRelease({ ...mbRelease, score: 70 }, baseTags, 'Vinyl')
+    const digital = scoreMBRelease({ ...mbRelease, score: 70 }, baseTags, 'Digital Media')
+    expect(vinyl.score).toBeGreaterThan(digital.score)
+  })
+
+  it('penalizes score when preferred medium does not match', () => {
+    const withMedium = scoreMBRelease({ ...mbRelease, score: 70 }, baseTags)
+    const penalized = scoreMBRelease({ ...mbRelease, score: 70 }, baseTags, 'Digital Media')
+    // mbRelease.media[0].format is 'Vinyl', so 'Digital Media' preference should penalize
+    expect(withMedium.score).toBeGreaterThan(penalized.score)
+  })
 })
 
 describe('scoreDiscogsResult', () => {
@@ -283,6 +296,16 @@ describe('matchFolder', () => {
     expect(result.candidates).toHaveLength(2)
     // Scores should reflect track count penalty for both
     expect(result.candidates[0].trackCount).not.toBe(2)
+  })
+
+  it('passes preferredMedium to scoring — preferred medium candidate wins over non-preferred', async () => {
+    const vinylRelease: MBRelease = { ...mbRelease, id: 'vinyl-id', score: 80, media: [{ format: 'Vinyl', position: 1, 'track-count': 2 }] }
+    const digitalRelease: MBRelease = { ...mbRelease, id: 'digital-id', score: 80, media: [{ format: 'Digital Media', position: 1, 'track-count': 2 }] }
+    const result = await matchFolder(makeFolder(), {
+      mbClient: makeMBClient([vinylRelease, digitalRelease]),
+      preferredMedium: 'Digital Media',
+    })
+    expect(result.candidates[0].externalId).toBe('digital-id')
   })
 
   it('continues if MusicBrainz throws, returning whatever Discogs found', async () => {

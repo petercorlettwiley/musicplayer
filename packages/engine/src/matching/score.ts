@@ -9,13 +9,16 @@ function normalizeStr(s: string | undefined | null): string {
 // Scores a MusicBrainz search result against the folder's aggregated tags.
 // Starts from the MB API's own relevance score and adjusts based on signals
 // we have that MB can't know about (track count, exact catalog number, etc.).
-export function scoreMBRelease(release: MBRelease, tags: AggregatedTags): ReleaseCandidate {
+// If preferredMedium is set (e.g. "Digital Media"), candidates that match get
+// a boost and those that don't get a penalty.
+export function scoreMBRelease(release: MBRelease, tags: AggregatedTags, preferredMedium?: string): ReleaseCandidate {
   let score = release.score ?? 50
 
   const labelInfo = release['label-info']?.[0]
   const candidateCatno = labelInfo?.['catalog-number']
   const candidateTrackCount = release.media?.reduce((n, m) => n + (m['track-count'] ?? 0), 0)
   const candidateYear = release.date ? parseInt(release.date, 10) : null
+  const candidateMedium = release.media?.[0]?.format ?? null
 
   // Barcode is the most reliable signal — if it matches exactly, boost heavily.
   if (tags.barcode && release.barcode && tags.barcode === release.barcode) {
@@ -40,6 +43,18 @@ export function scoreMBRelease(release: MBRelease, tags: AggregatedTags): Releas
     score = Math.min(100, score + 5)
   }
 
+  // When the user has specified an expected medium, reward candidates that match
+  // and penalize those that don't. This is the primary way to disambiguate between
+  // e.g. the vinyl and digital releases of the same album.
+  if (preferredMedium && candidateMedium) {
+    if (normalizeStr(candidateMedium).includes(normalizeStr(preferredMedium)) ||
+        normalizeStr(preferredMedium).includes(normalizeStr(candidateMedium))) {
+      score = Math.min(100, score + 15)
+    } else {
+      score = Math.max(0, score - 15)
+    }
+  }
+
   const artistCredit = release['artist-credit']?.map(c => c.name).join('') ?? null
 
   return {
@@ -51,14 +66,14 @@ export function scoreMBRelease(release: MBRelease, tags: AggregatedTags): Releas
     year: candidateYear,
     label: labelInfo?.label?.name ?? null,
     catalogNumber: candidateCatno ?? null,
-    medium: release.media?.[0]?.format ?? null,
+    medium: candidateMedium,
     trackCount: candidateTrackCount ?? null,
   }
 }
 
 // Scores a Discogs search result against the folder's aggregated tags.
 // Discogs doesn't give us a relevance score, so we build one from scratch.
-export function scoreDiscogsResult(result: DiscogsSearchResult, tags: AggregatedTags): ReleaseCandidate {
+export function scoreDiscogsResult(result: DiscogsSearchResult, tags: AggregatedTags, preferredMedium?: string): ReleaseCandidate {
   let score = 50  // base score for any result that came back from a targeted search
 
   // Barcode match — highest confidence signal.
@@ -84,6 +99,17 @@ export function scoreDiscogsResult(result: DiscogsSearchResult, tags: Aggregated
     score = Math.min(100, score + 5)
   }
 
+  // Medium preference — same logic as the MB scorer.
+  const candidateMedium = result.format?.[0] ?? null
+  if (preferredMedium && candidateMedium) {
+    if (normalizeStr(candidateMedium).includes(normalizeStr(preferredMedium)) ||
+        normalizeStr(preferredMedium).includes(normalizeStr(candidateMedium))) {
+      score = Math.min(100, score + 15)
+    } else {
+      score = Math.max(0, score - 15)
+    }
+  }
+
   return {
     provider: 'discogs',
     externalId: String(result.id),
@@ -93,7 +119,7 @@ export function scoreDiscogsResult(result: DiscogsSearchResult, tags: Aggregated
     year: candidateYear,
     label: result.label?.[0] ?? null,
     catalogNumber: result.catno ?? null,
-    medium: result.format?.[0] ?? null,
+    medium: candidateMedium,
     trackCount: null,  // not available in search results
   }
 }

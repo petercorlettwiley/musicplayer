@@ -17,6 +17,9 @@ export interface MBSearchParams {
   barcode?: string
   catalogNumber?: string
   label?: string
+  // MusicBrainz medium format — e.g. "Digital Media", "Vinyl", "CD".
+  // Included as a Lucene clause to bias results toward the specified format.
+  format?: string
 }
 
 export class MusicBrainzClient {
@@ -38,6 +41,7 @@ export class MusicBrainzClient {
     if (params.barcode) clauses.push(`barcode:${params.barcode}`)
     if (params.catalogNumber) clauses.push(`catno:"${params.catalogNumber}"`)
     if (params.label) clauses.push(`label:"${params.label}"`)
+    if (params.format) clauses.push(`format:"${params.format}"`)
 
     const query = clauses.join(' AND ')
     const url = `${BASE_URL}/release?query=${encodeURIComponent(query)}&limit=${limit}&fmt=json`

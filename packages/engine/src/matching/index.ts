@@ -10,6 +10,11 @@ export interface MatchOptions {
   discogsClient?: DiscogsClient
   // How many candidates to fetch from each provider.
   limit?: number
+  // Optional medium preference (e.g. "Digital Media", "Vinyl", "CD").
+  // Biases candidate scoring toward releases with a matching medium and
+  // is included in the MusicBrainz Lucene query. Does not override the
+  // medium written to release.yaml — that always comes from the API.
+  preferredMedium?: string
 }
 
 // Matches a scanned folder to a release in MusicBrainz and/or Discogs.
@@ -21,7 +26,7 @@ export async function matchFolder(
   folder: ScannedFolder,
   options: MatchOptions,
 ): Promise<MatchResult> {
-  const { mbClient, discogsClient, limit = 5 } = options
+  const { mbClient, discogsClient, limit = 5, preferredMedium } = options
   const tags = aggregateFolderTags(folder)
   const candidates: ReleaseCandidate[] = []
 
@@ -40,11 +45,12 @@ export async function matchFolder(
         barcode: tags.barcode,
         catalogNumber: tags.catalogNumber,
         label: tags.label,
+        format: preferredMedium,
       },
       limit,
     )
     for (const release of mbResults.releases) {
-      candidates.push(scoreMBRelease(release, tags))
+      candidates.push(scoreMBRelease(release, tags, preferredMedium))
     }
   } catch (err) {
     // A single provider failing shouldn't abort the whole match.
@@ -66,7 +72,7 @@ export async function matchFolder(
         limit,
       )
       for (const result of dResults.results) {
-        candidates.push(scoreDiscogsResult(result, tags))
+        candidates.push(scoreDiscogsResult(result, tags, preferredMedium))
       }
     } catch (err) {
       console.warn('Discogs search failed:', (err as Error).message)

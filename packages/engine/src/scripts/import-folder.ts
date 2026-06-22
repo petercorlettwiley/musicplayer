@@ -4,11 +4,13 @@
  * and writes release.yaml files for high-confidence matches.
  *
  * Usage:
- *   pnpm --filter @musicplayer/engine ingest -- <audio-folder> [--output <metadata-folder>]
+ *   pnpm --filter @musicplayer/engine ingest -- <audio-folder> [--output <metadata-folder>] [--medium <format>]
  *
  * Examples:
  *   pnpm --filter @musicplayer/engine ingest -- ~/Music
  *   pnpm --filter @musicplayer/engine ingest -- ~/Music --output ~/music-metadata
+ *   pnpm --filter @musicplayer/engine ingest -- ~/Music --medium "Digital Media"
+ *   pnpm --filter @musicplayer/engine ingest -- ~/Music --medium Vinyl
  *
  * For each subfolder:
  *   - High confidence  → writes release.yaml automatically
@@ -31,6 +33,8 @@ const args = process.argv.slice(2).filter(a => a !== '--')
 const audioFolder = args[0]
 const outputFlagIdx = args.indexOf('--output')
 const outputFolder = outputFlagIdx !== -1 ? args[outputFlagIdx + 1] : path.join(path.dirname(audioFolder ?? '.'), '_metadata')
+const mediumFlagIdx = args.indexOf('--medium')
+const preferredMedium = mediumFlagIdx !== -1 ? args[mediumFlagIdx + 1] : undefined
 
 if (!audioFolder) {
   console.error('Usage: import-folder.ts <audio-folder> [--output <metadata-folder>]')
@@ -40,7 +44,9 @@ if (!audioFolder) {
 const LIBRARY_SOURCE_ID = 'import-cli'
 
 console.log(`\nScanning: ${audioFolder}`)
-console.log(`Output:   ${outputFolder}\n`)
+console.log(`Output:   ${outputFolder}`)
+if (preferredMedium) console.log(`Medium:   ${preferredMedium} (preferred)`)
+console.log()
 
 const provider = new LocalFileSystemProvider()
 const mbClient = new MusicBrainzClient()
@@ -71,7 +77,7 @@ for (const folder of folders) {
   console.log(`\n▸ ${folder.relativePath}`)
   console.log(`  ${folder.tracks.length} track${folder.tracks.length === 1 ? '' : 's'}`)
 
-  const result = await matchFolder(folder, { mbClient, discogsClient })
+  const result = await matchFolder(folder, { mbClient, discogsClient, preferredMedium })
 
   if (result.confidence === 'high') {
     const top = result.candidates[0]
