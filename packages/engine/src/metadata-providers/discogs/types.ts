@@ -13,6 +13,8 @@ export interface DiscogsSearchResult {
   label?: string[]
   catno?: string
   format?: string[]
+  genre?: string[]
+  style?: string[]
   country?: string
   barcode?: string[]
   thumb?: string
@@ -26,6 +28,8 @@ export interface DiscogsRelease {
   artists?: Array<{ id: number; name: string }>
   labels?: Array<{ id: number; name: string; catno: string }>
   formats?: Array<{ name: string; qty?: string; descriptions?: string[] }>
+  genres?: string[]
+  styles?: string[]
   country?: string
   released?: string
   tracklist?: Array<{ position: string; title: string; duration?: string; type_: string }>

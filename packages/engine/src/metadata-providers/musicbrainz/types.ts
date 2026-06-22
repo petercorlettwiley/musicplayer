@@ -15,10 +15,11 @@ export interface MBRelease {
   status?: string
   barcode?: string
   score?: number
-  'release-group'?: { id: string; 'primary-type'?: string }
+  'release-group'?: { id: string; 'primary-type'?: string; 'first-release-date'?: string }
   'artist-credit'?: MBArtistCredit[]
   'label-info'?: MBLabelInfo[]
   media?: MBMedia[]
+  genres?: Array<{ id: string; name: string; count: number }>
 }
 
 export interface MBArtistCredit {

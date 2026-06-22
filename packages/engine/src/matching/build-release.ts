@@ -67,6 +67,8 @@ export async function buildReleaseFromMBID(
   const labelInfo = mb['label-info']?.[0]
   const artistCredit = mb['artist-credit']?.map(c => c.name).join('') ?? null
   const year = mb.date ? parseInt(mb.date, 10) : null
+  const releaseGroupFirstDate = mb['release-group']?.['first-release-date']
+  const originalYear = releaseGroupFirstDate ? parseInt(releaseGroupFirstDate, 10) : null
 
   // Flatten all tracks across all media into one list.
   const apiTracks: Array<{ position: string; title: string }> =
@@ -88,17 +90,23 @@ export async function buildReleaseFromMBID(
           file: t.filename,
         }))
 
+  const genres = mb.genres?.map(g => g.name)
+  const normalYear = isNaN(year as number) ? null : year
+  const normalOriginalYear = (originalYear && !isNaN(originalYear)) ? originalYear : null
+
   return {
     id: mb.id,
     release_group_id: mb['release-group']?.id ?? null,
     source: { library_source_id: librarySourceId, audio_path: folder.relativePath },
     artist: artistCredit,
     title: mb.title,
-    year: isNaN(year as number) ? null : year,
+    year: normalYear,
+    ...(normalOriginalYear !== null && normalOriginalYear !== normalYear ? { original_year: normalOriginalYear } : {}),
     label: labelInfo?.label?.name ?? null,
     catalog_number: labelInfo?.['catalog-number'] ?? null,
     medium: mb.media?.[0]?.format ?? null,
     source_format_note: null,
+    ...(genres && genres.length > 0 ? { genres } : {}),
     date_added: new Date().toISOString(),
     tracks,
   }
@@ -139,6 +147,8 @@ export async function buildReleaseFromDiscogsId(
     catalog_number: d.labels?.[0]?.catno ?? null,
     medium: d.formats?.[0]?.name ?? null,
     source_format_note: d.formats?.[0]?.descriptions?.join(', ') ?? null,
+    ...(d.genres && d.genres.length > 0 ? { genres: d.genres } : {}),
+    ...(d.styles && d.styles.length > 0 ? { styles: d.styles } : {}),
     date_added: new Date().toISOString(),
     tracks,
   }

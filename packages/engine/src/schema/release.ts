@@ -22,6 +22,8 @@ export type Track = z.infer<typeof TrackSchema>
 // The central entity — one specific release of an album (a particular pressing,
 // format, reissue, etc.), with enough detail to distinguish it from other versions
 // of the "same" album. audio_path is treated as opaque and never parsed or cleaned.
+// original_year is the year the underlying album first appeared in any form (from the
+// MB release group), which may differ from year (when this specific pressing came out).
 export const ReleaseSchema = z.object({
   id: z.string(),
   release_group_id: z.string().nullable(),
@@ -32,11 +34,13 @@ export const ReleaseSchema = z.object({
   artist: z.string().nullable(),
   title: z.string(),
   year: z.number().int().nullable(),
+  original_year: z.number().int().nullable().optional(),
   label: z.string().nullable(),
   catalog_number: z.string().nullable(),
   medium: z.string().nullable(),
   source_format_note: z.string().nullable(),
   genres: z.array(z.string()).optional(),
+  styles: z.array(z.string()).optional(),
   tracks: z.array(TrackSchema),
   artwork: z.array(ArtworkSchema).optional(),
   tags: z.array(TagApplicationSchema).optional(),
