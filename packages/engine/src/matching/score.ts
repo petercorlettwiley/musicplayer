@@ -67,14 +67,17 @@ export function scoreMBRelease(release: MBRelease, tags: AggregatedTags, preferr
     label: labelInfo?.label?.name ?? null,
     catalogNumber: candidateCatno ?? null,
     medium: candidateMedium,
+    country: release.country ?? null,
     trackCount: candidateTrackCount ?? null,
   }
 }
 
 // Scores a Discogs search result against the folder's aggregated tags.
 // Discogs doesn't give us a relevance score, so we build one from scratch.
+// Starts slightly higher than the MB base because Discogs data is preferred
+// for version/format details, genres, and styles.
 export function scoreDiscogsResult(result: DiscogsSearchResult, tags: AggregatedTags, preferredMedium?: string): ReleaseCandidate {
-  let score = 50  // base score for any result that came back from a targeted search
+  let score = 58  // base score — higher than MB's 50 to favor Discogs when close
 
   // Barcode match — highest confidence signal.
   if (tags.barcode && result.barcode?.includes(tags.barcode)) {
@@ -120,6 +123,7 @@ export function scoreDiscogsResult(result: DiscogsSearchResult, tags: Aggregated
     label: result.label?.[0] ?? null,
     catalogNumber: result.catno ?? null,
     medium: candidateMedium,
+    country: result.country ?? null,
     trackCount: null,  // not available in search results
   }
 }

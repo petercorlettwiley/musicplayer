@@ -17,6 +17,7 @@ export interface ReleaseCandidate {
   label: string | null
   catalogNumber: string | null
   medium: string | null
+  country: string | null
   trackCount: number | null
 }
 

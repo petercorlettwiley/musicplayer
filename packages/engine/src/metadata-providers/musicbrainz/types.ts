@@ -20,6 +20,14 @@ export interface MBRelease {
   'label-info'?: MBLabelInfo[]
   media?: MBMedia[]
   genres?: Array<{ id: string; name: string; count: number }>
+  relations?: MBUrlRelation[]
+}
+
+// A URL relation links a release to an external resource.
+// The 'discogs' type contains the URL of the matching Discogs release.
+export interface MBUrlRelation {
+  type: string
+  url: { resource: string }
 }
 
 export interface MBArtistCredit {

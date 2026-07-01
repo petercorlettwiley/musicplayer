@@ -25,6 +25,7 @@ export interface DiscogsRelease {
   id: number
   title: string
   year?: number
+  master_id?: number
   artists?: Array<{ id: number; name: string }>
   labels?: Array<{ id: number; name: string; catno: string }>
   formats?: Array<{ name: string; qty?: string; descriptions?: string[] }>
@@ -34,4 +35,12 @@ export interface DiscogsRelease {
   released?: string
   tracklist?: Array<{ position: string; title: string; duration?: string; type_: string }>
   images?: Array<{ type: string; uri: string; width: number; height: number }>
+}
+
+// The master release groups all versions of an album together.
+// Its year is the earliest known release year across all versions.
+export interface DiscogsMaster {
+  id: number
+  title: string
+  year?: number
 }
