@@ -56,11 +56,14 @@ export function buildStubRelease(folder: ScannedFolder, librarySourceId: string)
 
 // Fetches the full MusicBrainz release (to get the track listing) and maps it to
 // our Release schema, with actual filenames from the scanned folder.
+// If a discogsClient is provided, the MB URL relations are checked for a linked
+// Discogs release and genres/styles are pulled from there (Discogs data is preferred).
 export async function buildReleaseFromMBID(
   mbid: string,
   folder: ScannedFolder,
   librarySourceId: string,
   mbClient: MusicBrainzClient,
+  discogsClient?: DiscogsClient,
 ): Promise<Release> {
   const mb = await mbClient.lookupRelease(mbid)
 
@@ -90,7 +93,34 @@ export async function buildReleaseFromMBID(
           file: t.filename,
         }))
 
-  const genres = mb.genres?.map(g => g.name)
+  // Try to enrich genres/styles from Discogs.
+  // First choice: a direct URL relation in the MB data pointing to the exact Discogs release.
+  // Fallback: search Discogs by artist+title — search results include genre/style directly,
+  // so no full release lookup is needed and any pressing returns the same genre data.
+  let genres: string[] | undefined = mb.genres?.map(g => g.name)
+  let styles: string[] | undefined
+  if (discogsClient) {
+    const discogsRelation = mb.relations?.find(
+      r => r.type === 'discogs' && r.url.resource.includes('discogs.com/release/')
+    )
+    const discogsIdMatch = discogsRelation?.url.resource.match(/\/release\/(\d+)/)
+
+    if (discogsIdMatch) {
+      try {
+        const d = await discogsClient.lookupRelease(Number(discogsIdMatch[1]))
+        if (d.genres && d.genres.length > 0) genres = d.genres
+        if (d.styles && d.styles.length > 0) styles = d.styles
+      } catch { /* best-effort */ }
+    } else if (artistCredit) {
+      try {
+        const results = await discogsClient.searchReleases({ artist: artistCredit, title: mb.title }, 3)
+        const top = results.results[0]
+        if (top?.genre && top.genre.length > 0) genres = top.genre
+        if (top?.style && top.style.length > 0) styles = top.style
+      } catch { /* best-effort */ }
+    }
+  }
+
   const normalYear = isNaN(year as number) ? null : year
   const normalOriginalYear = (originalYear && !isNaN(originalYear)) ? originalYear : null
 
@@ -107,6 +137,7 @@ export async function buildReleaseFromMBID(
     medium: mb.media?.[0]?.format ?? null,
     source_format_note: null,
     ...(genres && genres.length > 0 ? { genres } : {}),
+    ...(styles && styles.length > 0 ? { styles } : {}),
     date_added: new Date().toISOString(),
     tracks,
   }

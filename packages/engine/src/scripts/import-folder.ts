@@ -121,7 +121,7 @@ async function writeCandidate(
 ) {
   let release
   if (candidate.provider === 'musicbrainz') {
-    release = await buildReleaseFromMBID(candidate.externalId, folder, LIBRARY_SOURCE_ID, mbClient)
+    release = await buildReleaseFromMBID(candidate.externalId, folder, LIBRARY_SOURCE_ID, mbClient, discogsClient)
   } else {
     release = await buildReleaseFromDiscogsId(Number(candidate.externalId), folder, LIBRARY_SOURCE_ID, discogsClient!)
   }

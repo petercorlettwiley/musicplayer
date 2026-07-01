@@ -49,9 +49,10 @@ export class MusicBrainzClient {
   }
 
   // Fetches the full details for one release by its MusicBrainz ID, including
-  // track listing, artist credits, label info, release group membership, and genres.
+  // track listing, artist credits, label info, release group, genres, and URL relations
+  // (which may include a link to the corresponding Discogs release).
   async lookupRelease(mbid: string): Promise<MBRelease> {
-    const inc = 'recordings+artists+labels+release-groups+genres'
+    const inc = 'recordings+artists+labels+release-groups+genres+url-rels'
     const url = `${BASE_URL}/release/${mbid}?inc=${inc}&fmt=json`
     return this.fetch<MBRelease>(url)
   }
