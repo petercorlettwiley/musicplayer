@@ -1,5 +1,5 @@
 import { ApiCache } from '../cache/index.js'
-import type { DiscogsRelease, DiscogsSearchResponse } from './types.js'
+import type { DiscogsMaster, DiscogsRelease, DiscogsSearchResponse } from './types.js'
 
 const BASE_URL = 'https://api.discogs.com'
 
@@ -53,6 +53,13 @@ export class DiscogsClient {
   async lookupRelease(releaseId: number): Promise<DiscogsRelease> {
     const url = `${BASE_URL}/releases/${releaseId}`
     return this.fetch<DiscogsRelease>(url)
+  }
+
+  // Fetches a Discogs master release by its numeric ID.
+  // The master's year is the earliest known release year across all versions.
+  async lookupMaster(masterId: number): Promise<DiscogsMaster> {
+    const url = `${BASE_URL}/masters/${masterId}`
+    return this.fetch<DiscogsMaster>(url)
   }
 
   // Makes a GET request with token auth, respecting rate limits and caching responses.

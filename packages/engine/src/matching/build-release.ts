@@ -113,6 +113,7 @@ export async function buildReleaseFromMBID(
 }
 
 // Fetches the full Discogs release and maps it to our Release schema.
+// Also fetches the master release (if one exists) to get the original release year.
 export async function buildReleaseFromDiscogsId(
   releaseId: number,
   folder: ScannedFolder,
@@ -120,6 +121,20 @@ export async function buildReleaseFromDiscogsId(
   discogsClient: DiscogsClient,
 ): Promise<Release> {
   const d = await discogsClient.lookupRelease(releaseId)
+
+  // Look up the master to get the original release year, which may differ from
+  // this specific pressing's year. Best-effort — don't fail if master lookup errors.
+  let originalYear: number | null = null
+  if (d.master_id) {
+    try {
+      const master = await discogsClient.lookupMaster(d.master_id)
+      if (master.year && master.year !== d.year) {
+        originalYear = master.year
+      }
+    } catch {
+      // master lookup failed — leave original_year null
+    }
+  }
 
   const apiTracks = (d.tracklist ?? [])
     .filter(t => t.type_ === 'track')
@@ -143,6 +158,7 @@ export async function buildReleaseFromDiscogsId(
     artist: d.artists?.map(a => a.name).join(', ') ?? null,
     title: d.title,
     year: d.year ?? null,
+    ...(originalYear !== null ? { original_year: originalYear } : {}),
     label: d.labels?.[0]?.name ?? null,
     catalog_number: d.labels?.[0]?.catno ?? null,
     medium: d.formats?.[0]?.name ?? null,
